@@ -1,0 +1,121 @@
+:root {
+  --bg: #0b0f1a;
+  --fg: #e7eaf1;
+  --muted: #9aa3b2;
+  --card: #121829;
+  --border: #1f2740;
+  --accent: #6ea8fe;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, "Helvetica Neue", Arial, "Noto Sans";
+  background: radial-gradient(1200px 700px at 10% 10%, #10172a 0%, #0b0f1a 60%) fixed;
+  color: var(--fg);
+}
+.app { max-width: 1000px; margin: 0 auto; padding: 24px; }
+header { text-align: center; margin-bottom: 16px; }
+h1 { margin: 0 0 8px; font-size: 28px; }
+p { color: var(--muted); margin: 0; }
+main { display: grid; grid-template-columns: 1fr; gap: 16px; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.25);
+}
+
+.game {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 16px;
+  align-items: center;
+}
+.status { display: flex; gap: 16px; margin-bottom: 10px; }
+.prompt { color: var(--muted); font-size: 14px; }
+.prompt ul { margin: 6px 0 0 18px; }
+.input-row { display: flex; gap: 8px; margin-top: 10px; }
+input#guess, input#name {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #0a1328;
+  color: var(--fg);
+}
+button {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: linear-gradient(#1a2240, #121b34);
+  color: var(--fg);
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button:hover:not(:disabled) { filter: brightness(1.08); }
+.feedback { margin-top: 10px; min-height: 24px; }
+.controls { margin-top: 10px; display: flex; gap: 8px; }
+
+table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+thead th { color: var(--muted); font-weight: 600; }
+
+@media (max-width: 900px) {
+  .game { grid-template-columns: 1fr; }
+  canvas#clock { margin: 0 auto; }
+}
+
+/* 🍬 Candy background con alto contraste (sin imágenes externas) */
+body.candy-contrast {
+  /* knobs de control */
+  --tile: 160px;                 /* tamaño del patrón */
+  --opacity-stripes: 0.18;       /* intensidad de rayas */
+  --opacity-dots: 0.22;          /* intensidad de caramelos (lunares) */
+  --overlay: rgba(10, 14, 25, .60); /* velo oscuro para contraste */
+
+  /* Capas:
+     1) velo oscuro para contrastar el contenido
+     2) “caramelos” (lunares brillantes)
+     3) más caramelos con otros colores/tamaños
+     4) rayas “candy cane” diagonales
+     5) base oscura
+  */
+  background:
+    radial-gradient(1200px 800px at 50% 40%, var(--overlay), rgba(10,14,25,.72) 60%, rgba(10,14,25,.82) 100%),
+    /* caramelos 1 (rosa/azul) */
+    radial-gradient(circle at 25% 30%, rgba(255,127,191, var(--opacity-dots)) 0 16px, transparent 17px) 0 0 / var(--tile) var(--tile),
+    radial-gradient(circle at 75% 75%, rgba(111,224,255, var(--opacity-dots)) 0 14px, transparent 15px) 0 0 / var(--tile) var(--tile),
+    /* caramelos 2 (amarillo/menta) */
+    radial-gradient(circle at 65% 20%, rgba(255,235,59,  calc(var(--opacity-dots) * .9)) 0 10px, transparent 11px) 0 0 / var(--tile) var(--tile),
+    radial-gradient(circle at 35% 80%, rgba(186,255,201, calc(var(--opacity-dots) * .9)) 0 12px, transparent 13px) 0 0 / var(--tile) var(--tile),
+    /* rayas tipo "candy cane" cruzadas */
+    repeating-linear-gradient( 45deg,
+      rgba(255,255,255, var(--opacity-stripes)) 0 12px,
+      rgba(255,105,180, var(--opacity-stripes)) 12px 24px,
+      rgba(255,255,255, var(--opacity-stripes)) 24px 36px,
+      rgba(111,224,255, var(--opacity-stripes)) 36px 48px
+    ),
+    repeating-linear-gradient(-45deg,
+      rgba(255,255,255, .06) 0 18px,
+      rgba(255,255,255, .00) 18px 36px
+    ),
+    linear-gradient(#0a0f1f, #0a0f1f);
+  background-attachment: fixed, fixed, fixed, fixed, fixed, fixed, fixed, fixed;
+}
+
+/* 🧱 Cartas/controles con legibilidad garantizada sobre el fondo */
+.candy-contrast .card {
+  background: rgba(18, 24, 41, 0.90);
+  border: 1px solid rgba(31, 39, 64, 0.95);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+}
+
+/* (opcional) versión más llamativa: sube intensidad del patrón */
+body.candy-contrast.candy-vivid {
+  --opacity-stripes: 0.26;
+  --opacity-dots: 0.30;
+}

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Say the Time ⏰ (English)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="candy-contrast candy-vivid" >
+  <div class="app">
+    <header>
+      <h1>Say the Time ⏰</h1>
+      <p>Write the time in <b>English</b>. You have 5 attemps to complete the game. Correct answer = 1 point.</p>
+    </header>
+
+    <main>
+      <section class="game card">
+        <div class="left">
+          <canvas id="clock" width="360" height="360"></canvas>
+        </div>
+        <div class="right">
+          <div class="status">
+            <div>Round: <b id="round">1 / 5</b></div>
+            <div>Score: <b id="score">0</b></div>
+          </div>
+
+          <div class="prompt">
+            <p>Write the time in English (examples):</p>
+            <ul>
+              <li><code>quarter past three</code></li>
+              <li><code>half past five</code></li>
+              <li><code>ten to four</code></li>
+              <li><code>three fifteen</code> · <code>3:15 pm</code> · <code>twelve o'clock</code></li>
+            </ul>
+          </div>
+
+          <div class="input-row">
+            <input id="guess" placeholder="e.g., quarter past three">
+            <button id="checkBtn">Check</button>
+          </div>
+
+          <div class="feedback" id="feedback">—</div>
+
+          <div class="controls">
+            <button id="newGameBtn">New Game</button>
+            <button id="nextBtn" disabled>Next</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="leaderboard card">
+        <h3>Leaderboard (Top 20)</h3>
+        <div class="save">
+          <input id="name" placeholder="Your name" maxlength="20">
+          <button id="saveBtn">Save Score</button>
+        </div>
+        <table>
+          <thead><tr><th>#</th><th>Player</th><th>Score</th></tr></thead>
+          <tbody id="lbBody"></tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>
