@@ -6,6 +6,14 @@
   --border: #1f2740;
   --accent: #6ea8fe;
 }
+/* Timer destacado */
+#timer {
+  padding: 2px 8px;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+  font-variant-numeric: tabular-nums;
+}
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {

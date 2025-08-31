@@ -1,16 +1,25 @@
 const $ = s => document.querySelector(s);
 
+/* =======================
+   Configuración del juego
+   ======================= */
+const ROUND_SECONDS = 20; // ⏱️ tiempo por ronda (ajústalo a gusto)
+
 let state = {
   round: 1,
   roundsTotal: 5,
   score: 0,
   current: { hour: 0, minute: 0 },
-  locked: false
+  locked: false,          // true cuando ya se contestó o se acabó el tiempo
+  timerId: null,
+  timeLeft: ROUND_SECONDS
 };
 
 function pad(n){ return String(n).padStart(2,"0"); }
 
-// === Dibujo de reloj analógico en canvas (con NÚMEROS) ===
+/* =======================
+   Reloj analógico (canvas)
+   ======================= */
 const canvas = document.getElementById("clock");
 const ctx = canvas.getContext("2d");
 const R = canvas.width/2;
@@ -29,7 +38,7 @@ function drawClock(h, m) {
   ctx.lineWidth = 4;
   ctx.stroke();
 
-  // marcas horas (gruesas)
+  // marcas horas
   ctx.strokeStyle = "#6ea8fe";
   ctx.lineWidth = 3;
   for (let i=0;i<12;i++){
@@ -41,7 +50,7 @@ function drawClock(h, m) {
     ctx.stroke();
   }
 
-  // marcas minutos (finas)
+  // marcas minutos finas
   ctx.strokeStyle = "#2a355c";
   ctx.lineWidth = 2;
   for (let i=0;i<60;i++){
@@ -54,17 +63,15 @@ function drawClock(h, m) {
     ctx.stroke();
   }
 
-  // NÚMEROS (1..12)
+  // NÚMEROS 1..12
   ctx.fillStyle = "#e7eaf1";
   ctx.font = "700 22px system-ui, -apple-system, Segoe UI, Roboto, Arial";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  const numR = R - 52; // radio donde se colocan los números
+  const numR = R - 52;
   for (let i=1; i<=12; i++){
     const ang = (i/12)*Math.PI*2 - Math.PI/2;
-    const x = numR * Math.cos(ang);
-    const y = numR * Math.sin(ang);
-    ctx.fillText(String(i), x, y);
+    ctx.fillText(String(i), numR*Math.cos(ang), numR*Math.sin(ang));
   }
 
   // agujas
@@ -95,7 +102,9 @@ function drawClock(h, m) {
   ctx.restore();
 }
 
-// === API ===
+/* ======
+   API
+   ====== */
 async function apiRound() {
   const r = await fetch("/api/round");
   return r.json(); // {hour,minute}
@@ -120,7 +129,49 @@ async function apiSaveScore(name, score) {
   return r.json();
 }
 
-// === Lógica de juego ===
+/* =======================
+   Juego + Timer por ronda
+   ======================= */
+function updateTimerUI() {
+  $("#timer").textContent = `${state.timeLeft}s`;
+}
+
+function stopTimer() {
+  if (state.timerId) {
+    clearInterval(state.timerId);
+    state.timerId = null;
+  }
+}
+
+function handleTimeUp() {
+  // si ya está bloqueado (porque contestó), no hagas nada
+  if (state.locked) return;
+  state.locked = true;       // se acabó la ronda
+  stopTimer();
+  // marcar como fallo (0 puntos) y mostrar solución
+  const { hour, minute } = state.current;
+  $("#feedback").textContent = `⏰ Time’s up! It was ${fmtEnglish(hour, minute)}.`;
+  // avanzar contador de ronda
+  state.round += 1;
+  $("#checkBtn").disabled = true;
+  $("#guess").disabled = true;
+  $("#nextBtn").disabled = (state.round > state.roundsTotal);
+  if (state.round > state.roundsTotal) {
+    $("#feedback").textContent += ` Game over. Final score: ${state.score}/${state.roundsTotal}.`;
+  }
+}
+
+function startTimer() {
+  stopTimer();
+  state.timeLeft = ROUND_SECONDS;
+  updateTimerUI();
+  state.timerId = setInterval(() => {
+    state.timeLeft -= 1;
+    updateTimerUI();
+    if (state.timeLeft <= 0) handleTimeUp();
+  }, 1000);
+}
+
 async function newGame() {
   state.round = 1;
   state.score = 0;
@@ -128,6 +179,7 @@ async function newGame() {
   $("#feedback").textContent = "—";
   $("#nextBtn").disabled = true;
   $("#checkBtn").disabled = false;
+  $("#guess").disabled = false;
   $("#guess").value = "";
   await nextRound(true);
 }
@@ -137,6 +189,9 @@ async function nextRound(resetFeedback=false) {
     $("#feedback").textContent = `Game over. Final score: ${state.score}/${state.roundsTotal}.`;
     $("#checkBtn").disabled = true;
     $("#nextBtn").disabled = true;
+    $("#guess").disabled = true;
+    stopTimer();
+    updateTimerUI();
     return;
   }
   const r = await apiRound();
@@ -146,16 +201,23 @@ async function nextRound(resetFeedback=false) {
   drawClock(r.hour, r.minute);
   if (resetFeedback) $("#feedback").textContent = "—";
   $("#guess").value = "";
+  $("#guess").disabled = false;
   $("#guess").focus();
   state.locked = false;
   $("#checkBtn").disabled = false;
   $("#nextBtn").disabled = true;
+
+  startTimer(); // ⏱️ arranca el contador para esta ronda
 }
 
 async function check() {
-  if (state.locked) return;
+  if (state.locked) return; // evita doble click
   const guessText = $("#guess").value.trim();
   if (!guessText) { $("#guess").focus(); return; }
+  // bloquea, corta timer y evalúa
+  state.locked = true;
+  stopTimer();
+
   const { hour, minute } = state.current;
   const res = await apiCheck(guessText, hour, minute);
 
@@ -167,11 +229,14 @@ async function check() {
     $("#feedback").textContent = `❌ Not quite. It was ${fmtEnglish(hour, minute)}.`;
   }
 
-  // pasa de ronda siempre (una oportunidad por ronda)
+  // avanza ronda
   state.round += 1;
-  state.locked = true;
   $("#checkBtn").disabled = true;
+  $("#guess").disabled = true;
   $("#nextBtn").disabled = (state.round > state.roundsTotal);
+  if (state.round > state.roundsTotal) {
+    $("#feedback").textContent += ` Game over. Final score: ${state.score}/${state.roundsTotal}.`;
+  }
 }
 
 function fmtEnglish(h24, m) {
@@ -181,7 +246,9 @@ function fmtEnglish(h24, m) {
   return `${h12}:${mm} ${ap}`;
 }
 
-// === Leaderboard ===
+/* =======================
+   Leaderboard
+   ======================= */
 async function loadLeaderboard() {
   const list = await apiLeaderboard();
   const tb = $("#lbBody");
@@ -202,16 +269,24 @@ async function saveScore() {
   if (r.ok) { $("#name").value = ""; await loadLeaderboard(); }
 }
 
-// utils
+/* =======================
+   Utils & eventos
+   ======================= */
 function escapeHtml(str){
   return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }
 
-// eventos
+// Clicks
 $("#checkBtn").addEventListener("click", check);
 $("#nextBtn").addEventListener("click", ()=>nextRound(true));
 $("#newGameBtn").addEventListener("click", newGame);
 $("#saveBtn").addEventListener("click", saveScore);
 
+// Enter para enviar si el botón está activo
+$("#guess").addEventListener("keydown", (e)=>{
+  if (e.key === "Enter" && !$("#checkBtn").disabled) check();
+});
+
+// Init
 loadLeaderboard();
 newGame();
